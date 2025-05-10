@@ -5,6 +5,7 @@ import sys
 from src.db.init_db import init_db
 from src.llm.rater import score_jobs
 from src.orchestrator.job_scraper import search_jobs
+from src.sheets.manager import sync_jobs_to_sheet
 from src.utils.helpers import extract_resume_text
 from src.utils.helpers import get_config
 
@@ -39,12 +40,19 @@ def run_job_scoring():
     print("Job scoring completed.")
 
 
+def run_sync_sheet():
+    print("Syncing jobs to Google Sheet...")
+    sync_jobs_to_sheet()
+    print("Sync complete.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run a single task from the job pipeline.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--init-db", action="store_true", help="Initialize the database")
     group.add_argument("--search-jobs", action="store_true", help="Search for jobs")
     group.add_argument("--score-jobs", action="store_true", help="Score jobs with resume and profile")
+    group.add_argument("--sync-sheet", action="store_true", help="Sync jobs table to Google Sheet")
 
     args = parser.parse_args()
 
@@ -55,6 +63,8 @@ def main():
             run_job_search()
         elif args.score_jobs:
             run_job_scoring()
+        elif args.sync_sheet:
+            run_sync_sheet()
     except Exception as e:
         print(f"Error in task execution: {e}")
         import traceback

@@ -2,3 +2,5 @@ pyyaml~=6.0.2
 pypdf2~=3.0.1
 playwright~=1.52.0
 ollama~=0.4.8
+gspread~=6.2.0
+oauth2client~=4.1.3

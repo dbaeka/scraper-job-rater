@@ -29,6 +29,10 @@ profile: "Talented financial analyst with a strong background in data analysis, 
 
 max_retries: 3
 
+google_sheet:
+    sheet_name: "Jobs Odelia Sheet"
+    credential_path: "keys/gcreds.json"
+
 backend: "ollama"
 ollama:
   model: "llama3.1"

@@ -1,3 +1,4 @@
+import datetime
 import os
 import sqlite3
 
@@ -18,8 +19,8 @@ class JobRepository:
             (
                 job_id, job_title, company, location, url, pay, job_type, 
                 shift_and_schedule, benefits, description, description_html, 
-                match_score, match_reason, likelihood_score
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                match_score, match_reason, likelihood_score, last_synced, date_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                   """, (
                       job.get('job_id'),
                       job.get('title_right_pane') or job.get('title_from_card_left_pane'),
@@ -34,7 +35,9 @@ class JobRepository:
                       job.get('full_job_description_html'),
                       job.get('score', None),
                       job.get('reason', None),
-                      job.get('likelihood_score', None)
+                      job.get('likelihood_score', None),
+                      None,
+                      job.get('date_updated', datetime.datetime.now().isoformat())
                   ))
         conn.commit()
         conn.close()
@@ -68,8 +71,42 @@ class JobRepository:
                   UPDATE jobs
                   SET match_score      = ?,
                       likelihood_score = ?,
-                      match_reason     = ?
+                      match_reason     = ?,
+                      date_updated     = ?
                   WHERE job_id = ?
-                  """, (match_score, likelihood_score, match_reason, job_id))
+                  """, (match_score, likelihood_score, match_reason, datetime.datetime.now().isoformat(), job_id))
+        conn.commit()
+        conn.close()
+
+    def get_jobs_for_sheet(self):
+        conn = self._connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+                       SELECT job_id,
+                              job_title,
+                              company,
+                              location,
+                              url,
+                              match_score,
+                              likelihood_score,
+                              match_reason,
+                              description,
+                              last_synced,
+                              date_updated
+                       FROM jobs
+                       """)
+        rows = cursor.fetchall()
+        headers = [desc[0] for desc in cursor.description]
+        conn.close()
+        return headers, rows
+
+    def update_last_synced(self, job_id):
+        conn = self._connect()
+        c = conn.cursor()
+        c.execute("""
+                  UPDATE jobs
+                  SET last_synced  = ?
+                  WHERE job_id = ?
+                  """, (datetime.datetime.now().isoformat(), job_id))
         conn.commit()
         conn.close()

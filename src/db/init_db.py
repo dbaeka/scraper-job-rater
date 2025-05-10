@@ -20,7 +20,9 @@ def init_db():
         match_score INTEGER,
         match_reason TEXT,
         date_scraped TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        likelihood_score INTEGER
+        likelihood_score INTEGER,
+        last_synced TIMESTAMP,
+        date_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     conn.commit()
     conn.close()
