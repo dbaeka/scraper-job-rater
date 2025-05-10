@@ -6,7 +6,7 @@ import urllib.parse
 
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-from db.repository import JobRepository
+from src.db.repository import JobRepository
 from src.utils.helpers import get_config
 
 repo = JobRepository()
