@@ -91,6 +91,6 @@ Resume:
                 match_reason=reason
             )
 
-            print(f"Scored job '{job['job_title']}' at {job['url']}")
+            print(f"Scored job '{job['job_title']}' at {job['url']} with match_score: {match_score}, likelihood_score: {likelihood_score}")
 
         offset += batch_size
