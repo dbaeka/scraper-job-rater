@@ -1,4 +1,5 @@
 import json
+from multiprocessing import Pool, cpu_count
 
 from src.db.repository import JobRepository
 from src.llm.backends import ollama_chat
@@ -17,18 +18,13 @@ def make_chat_completion(prompt):
         raise ValueError(f"Unsupported backend: {backend}")
 
 
-def score_jobs(profile, resume_text, batch_size=50):
-    while True:
-        jobs = repo.get_unscored_jobs(limit=batch_size)
-        if not jobs:
-            break
+def process_job(args):
+    job, profile, resume_text = args
+    job_desc = job.get("description")
+    if not job_desc:
+        return None
 
-        for job in jobs:
-            job_desc = job.get("description")
-            if not job_desc:
-                continue
-
-            prompt = f"""
+    prompt = f"""
 You are a job matching assistant.
 
 Compare the following job description with the candidate's profile and resume. Evaluate two things:
@@ -61,35 +57,53 @@ Resume:
 {resume_text}
 """
 
-            retries = 0
-            parsed = None
+    retries = 0
+    parsed = None
+    while retries < max_retries:
+        try:
+            result = make_chat_completion(prompt)
+            parsed = json.loads(result)
+            break
+        except Exception as e:
+            retries += 1
+            print(f"[Retry {retries}/3] Failed to parse job {job['job_id']}: {e}")
 
-            while retries < max_retries:
-                try:
-                    result = make_chat_completion(prompt)
-                    parsed = json.loads(result)
-                    break
-                except Exception as e:
-                    retries += 1
-                    print(f"[Retry {retries}/3] Failed to parse response for job {job['job_id']}: {e}")
+    if not parsed:
+        return None
 
-            if not parsed:
-                print(f"Skipping job {job['job_id']} after 3 failed attempts.")
+    try:
+        return {
+            "job_id": job["job_id"],
+            "match_score": int(parsed["match_score"]),
+            "likelihood_score": int(parsed["likelihood_score"]),
+            "reason": f"""Match Reason: {parsed["match_reason"]}\n\nLikelihood Reason: {parsed["likelihood_reason"]}"""
+        }
+    except KeyError as e:
+        print(f"Missing expected key {e} for job {job['job_id']}")
+        return None
+
+
+def score_jobs(profile, resume_text, batch_size=5):
+    num_workers = min(cpu_count() - 1, batch_size)
+    print(f"Using {num_workers} workers for job scoring.")
+
+    while True:
+        jobs = repo.get_unscored_jobs(limit=batch_size)
+        if not jobs:
+            break
+
+        with Pool(processes=num_workers) as pool:
+            job_args = [(job, profile, resume_text) for job in jobs]
+            results = pool.map(process_job, job_args)
+
+        for res in results:
+            if not res:
                 continue
-
-            try:
-                match_score = int(parsed["match_score"])
-                likelihood_score = int(parsed["likelihood_score"])
-                reason = f"""Match Reason: {parsed["match_reason"]}\n\nLikelihood Reason: {parsed["likelihood_reason"]}"""
-            except KeyError as e:
-                print(f"Missing expected key {e} in parsed JSON. Skipping job {job['job_id']}.")
-                continue
-
             repo.update_job_scores(
-                job_id=job["job_id"],
-                match_score=match_score,
-                likelihood_score=likelihood_score,
-                match_reason=reason
+                job_id=res["job_id"],
+                match_score=res["match_score"],
+                likelihood_score=res["likelihood_score"],
+                match_reason=res["reason"]
             )
-
-            print(f"Scored job '{job['job_title']}' at {job['url']} with match_score: {match_score}, likelihood_score: {likelihood_score}")
+            print(
+                f"Scored job {res['job_id']} — match_score: {res['match_score']}, likelihood_score: {res['likelihood_score']}")
