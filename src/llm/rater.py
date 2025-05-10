@@ -39,6 +39,8 @@ Compare the following job description with the candidate's profile and resume. E
 3. match_reason: A short explanation for why you gave the match score.
 4. likelihood_reason: A short explanation for your likelihood score.
 
+Be very objective in your evaluation. If the job is not a good fit, give low scores and explain why.
+
 Respond in valid JSON format only, like this, don't give any other text beside the JSON:
 
 {{
