@@ -16,7 +16,10 @@ Job Hunter helps you streamline your job search process by:
 ### Prerequisites
 
 - Python 3.11+
-- Ollama with llama3.1 model (for job scoring)
+- One of the following LLM backends:
+  - Ollama with qwen3:8b model (local)
+  - OpenRouter API key
+  - Gemini API key 
 - Google Service Account API credentials with Sheets API access
 
 ### Installation
@@ -37,7 +40,15 @@ Job Hunter helps you streamline your job search process by:
    python -m playwright install
    ```
 
-4. Set up Google API:
+4. Set up API keys:
+   - Create a `.env` file in the project root based on `.env.example`
+   - Add your API keys for the LLM backends you plan to use:
+     ```
+     OPENROUTER_API_KEY=your_openrouter_api_key
+     GEMINI_API_KEY=your_gemini_api_key
+     ```
+
+5. Set up Google API:
     - Place your Google API credentials JSON file at `keys/gcreds.json`
     - Ensure the Google account has access to Google Sheets API
     - Share the Google Sheet with the service account email
@@ -69,8 +80,10 @@ Configure the application through the `app.yaml` file at the project root:
 
 ### LLM Backend Configuration
 
-- `backend`: LLM backend to use (currently supports "ollama")
+- `backend`: LLM backend to use (supports "ollama", "openrouter", or "gemini")
 - `ollama`: Configuration for Ollama backend (model, temperature)
+- `openrouter`: Configuration for OpenRouter backend (model, temperature)
+- `gemini`: Configuration for Gemini backend (model, temperature)
 
 ## Usage
 
@@ -118,10 +131,13 @@ job-hunter/
 ├── src/                   # Source code
 │   ├── db/                # Database operations
 │   ├── llm/               # LLM integration for job scoring
+│   │   └── backends/      # Different LLM backend implementations
 │   ├── orchestrator/      # Job scraping orchestration
 │   ├── sheets/            # Google Sheets integration
 │   └── utils/             # Utility functions
 ├── tests/                 # Test files
+├── .env                   # Environment variables (API keys)
+├── .env.example           # Example environment variables template
 ├── app.yaml               # Application configuration
 ├── main.py                # Application entry point
 └── requirements.txt       # Python dependencies
