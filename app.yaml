@@ -31,7 +31,7 @@ I am looking for more entry to mid level roles based on my experience. I still h
 max_retries: 3
 
 google_sheet:
-  sheet_name: "Jobs Odelia Sheet"
+  sheet_name: "Jobs Sheet"
   credential_path: "keys/gcreds.json"
 
 backend: "ollama"
