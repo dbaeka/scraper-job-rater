@@ -91,6 +91,7 @@ class JobRepository:
                               likelihood_score,
                               match_reason,
                               description,
+                              date_scraped,
                               last_synced,
                               date_updated
                        FROM jobs
