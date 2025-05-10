@@ -190,18 +190,8 @@ def search_jobs():
     criteria = config.get("search_criteria", {})
     job_titles_search = criteria.get("job_titles", [])
     locations_search = criteria.get("locations", [])
-    date_posted = criteria.get("date_posted", "last_7_days")
     salary_min = criteria.get("salary_min", None)
     job_types = criteria.get("job_types", [])
-
-    fromage_map = {
-        "last_24_hours": "Last 24 hours",
-        "last_3_days": "Last 3 days",
-        "last_7_days": "Last 7 days",
-        "last_14_days": "Last 14 days",
-        "any": ""
-    }
-    fromage = fromage_map.get(date_posted, "Last 7 days")
 
     fromsalary_map = {
         "60000": "$60,000+",
@@ -229,7 +219,19 @@ def search_jobs():
     processed_job_ids_global = set()
 
     for search_title in job_titles_search:
-        for search_location in locations_search:
+        for locations in locations_search:
+            fromage_map = {
+                "last_24_hours": "Last 24 hours",
+                "last_3_days": "Last 3 days",
+                "last_7_days": "Last 7 days",
+                "last_14_days": "Last 14 days",
+                "any": ""
+            }
+            search_location = locations.get("location", "Ontario")
+            date_posted = locations.get("date_posted", "any")
+
+            fromage = fromage_map.get(date_posted, "Last 7 days")
+
             logger.info(f"Initiating search for '{search_title}' in '{search_location}' (last {fromage} days)")
             try:
                 page.wait_for_selector("form#jobsearch", timeout=15000)
@@ -252,7 +254,7 @@ def search_jobs():
 
                         date_filter_button = page.wait_for_selector("button#fromAge_filter_button", timeout=20000)
                         date_filter_button.click()
-
+                        random_delay('s')
                         page.wait_for_selector(
                             "div[role='menu'][aria-labelledby='fromAge_filter_button']:not([hidden])",
                             timeout=10000
@@ -276,7 +278,7 @@ def search_jobs():
 
                         pay_filter_button = page.wait_for_selector("button#salaryType_filter_button", timeout=20000)
                         pay_filter_button.click()
-
+                        random_delay('s')
                         page.wait_for_selector(
                             "div[role='menu'][aria-labelledby='salaryType_filter_button']:not([hidden])",
                             timeout=10000
@@ -300,7 +302,7 @@ def search_jobs():
                         # Open the Job Type filter dialog
                         job_type_filter_button = page.wait_for_selector("button#filter-jobtype1", timeout=20000)
                         job_type_filter_button.click()
-
+                        random_delay('s')
                         page.wait_for_selector(
                             "div[role='dialog'][aria-label='Edit Job type filter selection']:not([hidden])",
                             timeout=10000

@@ -1,28 +1,22 @@
 search_criteria:
   job_titles:
-#    - "Financial Analyst"
-#    - "Reconciliation Analyst"
+    - "Financial Analyst"
+    - "Reconciliation Analyst"
     - "Data Analyst"
     - "Business Analyst"
     - "Financial Data Analyst"
     - "Financial Reporting"
     - "Treasury Operations"
   locations:
-    - "Charlottetown, PE"
-    - "Ontario"
-    - "British Columbia"
-    - "Remote"
+    - location: "Charlottetown, PE"
+      date_posted: "last_14_days"
+    - location: "Ontario"
+      date_posted: "last_3_days"
+    - location: "British Columbia"
+      date_posted: "last_3_days"
+    - location: "Remote"
+      date_posted: "last_3_days"
   salary_min: "60000"
-  date_posted: "last_24_hours"
-  keywords_must_include: [
-    "financial analyst",
-    "reconciliation analyst",
-    "data analyst",
-    "business analyst",
-    "financial data analyst",
-    "financial reporting",
-    "treasury operations"
-  ]
   job_types:
     - "full_time"
     - "permanent"
