@@ -18,9 +18,8 @@ def make_chat_completion(prompt):
 
 
 def score_jobs(profile, resume_text, batch_size=50):
-    offset = 0
     while True:
-        jobs = repo.get_unscored_jobs(limit=batch_size, offset=offset)
+        jobs = repo.get_unscored_jobs(limit=batch_size)
         if not jobs:
             break
 
@@ -94,5 +93,3 @@ Resume:
             )
 
             print(f"Scored job '{job['job_title']}' at {job['url']} with match_score: {match_score}, likelihood_score: {likelihood_score}")
-
-        offset += batch_size
