@@ -1,26 +1,20 @@
 import json
 
-from ollama import Client
-
 from src.db.repository import JobRepository
+from src.llm.backends import ollama_chat
 from src.utils.helpers import get_config
 
-ollama_client = Client()
 repo = JobRepository()
 config = get_config()
-model_config = config.get("ollama", {})
-model_name = model_config.get("model", "llama3.1")
+backend = config.get("backend", "ollama")
+max_retries = config.get("max_retries", 3)
 
 
-def generate(prompt):
-    response = ollama_client.chat(
-        model=model_name,
-        messages=[{"role": "user", "content": prompt}],
-        options={
-            "temperature": model_config.get("temperature", 0.7),
-        }
-    )
-    return response['message']['content']
+def make_chat_completion(prompt):
+    if backend == "ollama":
+        return ollama_chat.generate(prompt)
+    else:
+        raise ValueError(f"Unsupported backend: {backend}")
 
 
 def score_jobs(profile, resume_text, batch_size=50):
@@ -66,15 +60,28 @@ Resume:
 {resume_text}
 """
 
-            result = generate(prompt)
+            retries = 0
+            parsed = None
+
+            while retries < max_retries:
+                try:
+                    result = make_chat_completion(prompt)
+                    parsed = json.loads(result)
+                    break
+                except Exception as e:
+                    retries += 1
+                    print(f"[Retry {retries}/3] Failed to parse response for job {job['job_id']}: {e}")
+
+            if not parsed:
+                print(f"Skipping job {job['job_id']} after 3 failed attempts.")
+                continue
 
             try:
-                parsed = json.loads(result)
                 match_score = int(parsed["match_score"])
                 likelihood_score = int(parsed["likelihood_score"])
                 reason = f"""Match Reason: {parsed["match_reason"]}\n\nLikelihood Reason: {parsed["likelihood_reason"]}"""
-            except Exception as e:
-                print(f"Failed to parse result for job {job['job_id']}: {e}")
+            except KeyError as e:
+                print(f"Missing expected key {e} in parsed JSON. Skipping job {job['job_id']}.")
                 continue
 
             repo.update_job_scores(
