@@ -1,8 +1,9 @@
 import json
+import time
 from multiprocessing import Pool, cpu_count
 
 from src.db.repository import JobRepository
-from src.llm.backends import ollama_chat
+from src.llm.backends import ollama_chat, openrouter_chat, gemini_chat
 from src.utils.helpers import get_config
 
 repo = JobRepository()
@@ -14,6 +15,10 @@ max_retries = config.get("max_retries", 3)
 def make_chat_completion(prompt):
     if backend == "ollama":
         return ollama_chat.generate(prompt)
+    elif backend == "openrouter":
+        return openrouter_chat.generate(prompt)
+    elif backend == "gemini":
+        return gemini_chat.generate(prompt)
     else:
         raise ValueError(f"Unsupported backend: {backend}")
 
@@ -62,12 +67,16 @@ Resume:
     while retries < max_retries:
         try:
             result = make_chat_completion(prompt)
+            if not result:
+                print(f"Empty response for job {job['job_id']}")
+                time.sleep(5)
             parsed = json.loads(result)
             break
         except Exception as e:
             retries += 1
             print(f"[Retry {retries}/3] Failed to parse job {job['job_id']}: {e}")
-            print(result)
+            if result:
+                print(f"Response: {result}")
 
     if not parsed:
         return None

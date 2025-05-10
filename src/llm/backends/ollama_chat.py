@@ -17,4 +17,23 @@ def generate(prompt):
             "temperature": temperature,
         }
     )
-    return response['message']['content']
+
+    is_thinking = check_is_thinking(response['message']['content'])
+
+    return response['message']['content'] if not is_thinking else extract_non_thinking_response(
+        response['message']['content'])
+
+
+def check_is_thinking(message):
+    if "<think>" in message.lower() or "</think>" in message.lower():
+        return True
+    return False
+
+
+def extract_non_thinking_response(message):
+    start = message.lower().find("<think>")
+    end = message.lower().find("</think>")
+
+    if start != -1 and end != -1:
+        return message[:start] + message[end + len("</think>"):]
+    return message

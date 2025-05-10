@@ -2,6 +2,8 @@ import argparse
 import os
 import sys
 
+from dotenv import load_dotenv
+
 from src.db.init_db import init_db
 from src.llm.rater import score_jobs
 from src.orchestrator.job_scraper import search_jobs
@@ -75,4 +77,5 @@ def main():
 
 
 if __name__ == "__main__":
+    load_dotenv()
     sys.exit(main())
