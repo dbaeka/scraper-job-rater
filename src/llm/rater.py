@@ -67,6 +67,7 @@ Resume:
         except Exception as e:
             retries += 1
             print(f"[Retry {retries}/3] Failed to parse job {job['job_id']}: {e}")
+            print(result)
 
     if not parsed:
         return None
@@ -80,6 +81,7 @@ Resume:
         }
     except KeyError as e:
         print(f"Missing expected key {e} for job {job['job_id']}")
+        print(f"Response: {parsed}")
         return None
 
 
