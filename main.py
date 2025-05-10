@@ -1,51 +1,62 @@
+import argparse
 import os
 import sys
 
-from db.init_db import init_db
-from src.llm.ollama_backend import match_jobs
+from src.db.init_db import init_db
+from src.llm.rater import score_jobs
 from src.orchestrator.job_scraper import search_jobs
 from src.utils.helpers import extract_resume_text
 from src.utils.helpers import get_config
 
 
+def run_init_db():
+    print("Initializing database...")
+    init_db()
+
+
+def run_job_search():
+    print("Searching for jobs...")
+    search_jobs()
+    print("Job search completed.")
+
+
+def run_job_scoring():
+    print("Running job scoring...")
+    config = get_config()
+    resume_path = os.path.join(os.getcwd(), config["resume_path"])
+    profile = config["profile"]
+
+    if not os.path.exists(resume_path):
+        print(f"Resume not found at: {resume_path}")
+        return
+
+    resume_text = extract_resume_text(resume_path)
+    if not resume_text:
+        print("Failed to extract resume text.")
+        return
+
+    score_jobs(profile, resume_text)
+    print("Job scoring completed.")
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Run a single task from the job pipeline.")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--init-db", action="store_true", help="Initialize the database")
+    group.add_argument("--search-jobs", action="store_true", help="Search for jobs")
+    group.add_argument("--score-jobs", action="store_true", help="Score jobs with resume and profile")
+
+    args = parser.parse_args()
+
     try:
-        config = get_config()
-
-        # Initialize database
-        print("Initializing database...")
-        init_db()
-
-        # Search for jobs
-        print("Searching for jobs...")
-        jobs = search_jobs()
-
-        if not jobs or len(jobs) == 0:
-            print("No jobs found. Exiting.")
-            return None
-
-        print(f"Found {len(jobs)} jobs")
-
-        # Extract resume text
-        print("Extracting resume text...")
-        resume_path = os.path.join(os.getcwd(), config["resume_path"])
-        if not os.path.exists(resume_path):
-            print(f"Resume not found at: {resume_path}")
-            return None
-
-        resume_text = extract_resume_text(resume_path)
-        if not resume_text:
-            print("Failed to extract resume text")
-            return None
-
-        # Match jobs against resume
-        print("Matching jobs against resume...")
-        matched_jobs = match_jobs(jobs, resume_text)
-
-        print(f"Job matching complete. Found {len(matched_jobs) if matched_jobs else 0} matches.")
-
+        if args.init_db:
+            run_init_db()
+        elif args.search_jobs:
+            run_job_search()
+        elif args.score_jobs:
+            run_job_scoring()
     except Exception as e:
-        print(f"Error in main program: {e}")
+        print(f"Error in task execution: {e}")
         import traceback
         traceback.print_exc()
         return 1
